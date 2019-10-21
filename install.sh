@@ -126,34 +126,6 @@ if [[ $? = 0 ]]; then
 fi
 
 # ###########################################################
-# Wallpaper
-# ###########################################################
-MD5_NEWWP=$(md5 img/wallpaper.jpg | awk '{print $4}')
-MD5_OLDWP=$(md5 /System/Library/CoreServices/DefaultDesktop.jpg | awk '{print $4}')
-if [[ "$MD5_NEWWP" != "$MD5_OLDWP" ]]; then
-  read -r -p "Do you want to use the project's custom desktop wallpaper? [y|N] " response
-  if [[ $response =~ (yes|y|Y) ]]; then
-    running "Set a custom wallpaper image"
-    # rm -rf ~/Library/Application Support/Dock/desktoppicture.db
-    bot "I will backup system wallpapers in ~/.dotfiles/img/"
-    sudo cp /System/Library/CoreServices/DefaultDesktop.jpg img/DefaultDesktop.jpg > /dev/null 2>&1
-    sudo cp /Library/Desktop\ Pictures/El\ Capitan.jpg img/El\ Capitan.jpg > /dev/null 2>&1
-    sudo cp /Library/Desktop\ Pictures/Sierra.jpg img/Sierra.jpg > /dev/null 2>&1
-    sudo cp /Library/Desktop\ Pictures/Sierra\ 2.jpg img/Sierra\ 2.jpg > /dev/null 2>&1
-    sudo rm -f /System/Library/CoreServices/DefaultDesktop.jpg > /dev/null 2>&1
-    sudo rm -f /Library/Desktop\ Pictures/El\ Capitan.jpg > /dev/null 2>&1
-    sudo rm -f /Library/Desktop\ Pictures/Sierra.jpg > /dev/null 2>&1
-    sudo rm -f /Library/Desktop\ Pictures/Sierra\ 2.jpg > /dev/null 2>&1
-    sudo cp ./img/wallpaper.jpg /System/Library/CoreServices/DefaultDesktop.jpg;
-    sudo cp ./img/wallpaper.jpg /Library/Desktop\ Pictures/Sierra.jpg;
-    sudo cp ./img/wallpaper.jpg /Library/Desktop\ Pictures/Sierra\ 2.jpg;
-    sudo cp ./img/wallpaper.jpg /Library/Desktop\ Pictures/El\ Capitan.jpg;ok
-  else
-    ok "skipped"
-  fi
-fi
-
-# ###########################################################
 # Install non-brew various tools (PRE-BREW Installs)
 # ###########################################################
 
@@ -261,69 +233,6 @@ if [[ $response =~ (y|yes|Y) ]]; then
 
   popd > /dev/null 2>&1
 fi
-
-bot "VIM Setup"
-read -r -p "Do you want to install vim plugins now? [y|N] " response
-if [[ $response =~ (y|yes|Y) ]];then
-  bot "Installing vim plugins"
-  # cmake is required to compile vim bundle YouCompleteMe
-  # require_brew cmake
-  vim +PluginInstall +qall > /dev/null 2>&1
-  ok
-else
-  ok "skipped. Install by running :PluginInstall within vim"
-fi
-
-
-read -r -p "Install fonts? [y|N] " response
-if [[ $response =~ (y|yes|Y) ]];then
-  bot "installing fonts"
-  # need fontconfig to install/build fonts
-  require_brew fontconfig
-  ./fonts/install.sh
-  brew tap homebrew/cask-fonts
-  require_cask font-fontawesome
-  require_cask font-awesome-terminal-fonts
-  require_cask font-hack
-  require_cask font-inconsolata-dz-for-powerline
-  require_cask font-inconsolata-g-for-powerline
-  require_cask font-inconsolata-for-powerline
-  require_cask font-roboto-mono
-  require_cask font-roboto-mono-for-powerline
-  require_cask font-source-code-pro
-  ok
-fi
-
-
-# if [[ -d "/Library/Ruby/Gems/2.0.0" ]]; then
-#   running "Fixing Ruby Gems Directory Permissions"
-#   sudo chown -R $(whoami) /Library/Ruby/Gems/2.0.0
-#   ok
-# fi
-
-# node version manager
-require_brew nvm
-
-# nvm
-require_nvm stable
-
-# always pin versions (no surprises, consistent dev/build machines)
-npm config set save-exact true
-
-#####################################
-# Now we can switch to node.js mode
-# for better maintainability and
-# easier configuration via
-# JSON files and inquirer prompts
-#####################################
-
-bot "installing npm tools needed to run this project..."
-npm install
-ok
-
-bot "installing packages from config.js..."
-node index.js
-ok
 
 running "cleanup homebrew"
 brew cleanup --force > /dev/null 2>&1
@@ -566,19 +475,15 @@ defaults write NSGlobalDomain AppleEnableMenuBarTransparency -bool false;ok
 running "Menu bar: hide the Time Machine, Volume, User, and Bluetooth icons"
 for domain in ~/Library/Preferences/ByHost/com.apple.systemuiserver.*; do
   defaults write "${domain}" dontAutoLoad -array \
-    "/System/Library/CoreServices/Menu Extras/TimeMachine.menu" \
     "/System/Library/CoreServices/Menu Extras/Volume.menu" \
     "/System/Library/CoreServices/Menu Extras/User.menu"
 done;
 defaults write com.apple.systemuiserver menuExtras -array \
-  "/System/Library/CoreServices/Menu Extras/Bluetooth.menu" \
-  "/System/Library/CoreServices/Menu Extras/AirPort.menu" \
-  "/System/Library/CoreServices/Menu Extras/Battery.menu" \
-  "/System/Library/CoreServices/Menu Extras/Clock.menu"
+  "/System/Library/CoreServices/Menu Extras/AirPort.menu" 
 ok
 
-running "Set highlight color to green"
-defaults write NSGlobalDomain AppleHighlightColor -string "0.764700 0.976500 0.568600";ok
+# running "Set highlight color to green"
+# defaults write NSGlobalDomain AppleHighlightColor -string "0.764700 0.976500 0.568600";ok
 
 running "Set sidebar icon size to medium"
 defaults write NSGlobalDomain NSTableViewDefaultSizeMode -int 2;ok
@@ -685,7 +590,7 @@ defaults write NSGlobalDomain InitialKeyRepeat -int 10;ok
 
 running "Set language and text formats (english/US)"
 defaults write NSGlobalDomain AppleLanguages -array "en"
-defaults write NSGlobalDomain AppleLocale -string "en_US@currency=USD"
+defaults write NSGlobalDomain AppleLocale -string "de_CH@currency=CHF"
 defaults write NSGlobalDomain AppleMeasurementUnits -string "Centimeters"
 defaults write NSGlobalDomain AppleMetricUnits -bool true;ok
 
@@ -728,10 +633,10 @@ defaults write com.apple.finder QuitMenuItem -bool true;ok
 running "Disable window animations and Get Info animations"
 defaults write com.apple.finder DisableAllAnimations -bool true;ok
 
-running "Set Desktop as the default location for new Finder windows"
+running "Set Home as the default location for new Finder windows"
 # For other paths, use 'PfLo' and 'file:///full/path/here/'
 defaults write com.apple.finder NewWindowTarget -string "PfDe"
-defaults write com.apple.finder NewWindowTargetPath -string "file://${HOME}/Desktop/";ok
+defaults write com.apple.finder NewWindowTargetPath -string "file://${HOME}/";ok
 
 running "Show hidden files by default"
 defaults write com.apple.finder AppleShowAllFiles -bool true;ok
@@ -1027,35 +932,6 @@ bot "Terminal & iTerm2"
 defaults write com.apple.terminal FocusFollowsMouse -bool true
 #defaults write org.x.X11 wm_ffm -bool true;ok
 
-running "Installing the Solarized Light theme for iTerm (opening file)"
-open "./configs/Solarized Light.itermcolors";ok
-running "Installing the Patched Solarized Dark theme for iTerm (opening file)"
-open "./configs/Solarized Dark Patch.itermcolors";ok
-
-running "Don’t display the annoying prompt when quitting iTerm"
-defaults write com.googlecode.iterm2 PromptOnQuit -bool false;ok
-running "hide tab title bars"
-defaults write com.googlecode.iterm2 HideTab -bool true;ok
-running "set system-wide hotkey to show/hide iterm with ^\`"
-defaults write com.googlecode.iterm2 Hotkey -bool true;ok
-running "hide pane titles in split panes"
-defaults write com.googlecode.iterm2 ShowPaneTitles -bool false;ok
-running "animate split-terminal dimming"
-defaults write com.googlecode.iterm2 AnimateDimming -bool true;ok
-defaults write com.googlecode.iterm2 HotkeyChar -int 96;
-defaults write com.googlecode.iterm2 HotkeyCode -int 50;
-defaults write com.googlecode.iterm2 FocusFollowsMouse -int 1;
-defaults write com.googlecode.iterm2 HotkeyModifiers -int 262401;
-running "Make iTerm2 load new tabs in the same directory"
-/usr/libexec/PlistBuddy -c "set \"New Bookmarks\":0:\"Custom Directory\" Recycle" ~/Library/Preferences/com.googlecode.iterm2.plist
-running "setting fonts"
-defaults write com.googlecode.iterm2 "Normal Font" -string "Hack-Regular 12";
-defaults write com.googlecode.iterm2 "Non Ascii Font" -string "RobotoMonoForPowerline-Regular 12";
-ok
-running "reading iterm settings"
-defaults read -app iTerm > /dev/null 2>&1;
-ok
-
 ###############################################################################
 bot "Time Machine"
 ###############################################################################
@@ -1174,25 +1050,11 @@ running "Disable continuous spell checking"
 defaults write com.apple.messageshelper.MessageController SOInputLineSettings -dict-add "continuousSpellCheckingEnabled" -bool false;ok
 
 ###############################################################################
-bot "SizeUp.app"
-###############################################################################
-
-running "Start SizeUp at login"
-defaults write com.irradiatedsoftware.SizeUp StartAtLogin -bool true;ok
-
-running "Don’t show the preferences window on next start"
-defaults write com.irradiatedsoftware.SizeUp ShowPrefsOnNextStart -bool false;ok
-
-killall cfprefsd
-
-open /Applications/iTerm.app
-
-###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
 bot "OK. Note that some of these changes require a logout/restart to take effect. Killing affected applications (so they can reboot)...."
 for app in "Activity Monitor" "Address Book" "Calendar" "Contacts" "cfprefsd" \
-  "Dock" "Finder" "Mail" "Messages" "Safari" "SizeUp" "SystemUIServer" \
+  "Dock" "Finder" "Mail" "Messages" "Safari" "SystemUIServer" \
   "iCal" "Terminal"; do
   killall "${app}" > /dev/null 2>&1
 done
